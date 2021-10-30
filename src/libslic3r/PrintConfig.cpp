@@ -2585,6 +2585,18 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
+    def = this->add("lift_min", coFloat);
+    def->label = L("Min height for travel");
+    def->category = OptionCategory::extruders;
+    def->tooltip = L("When an extruder travels to an object (from the start position or from an object to another), the nozzle height is guaranteed to be at least at this value."
+        "\nIt's made to ensure the nozzle won't hit clips or things you have on your bed. But be careful to not put a clip in the 'convex shape' of an object."
+        "\nSet to 0 to disable.");
+    def->sidetext = L("mm");
+    def->min = 0;
+    def->mode = comExpert;
+    def->is_vector_extruder = true;
+    def->set_default_value(new ConfigOptionFloat(0));
+
     def = this->add("machine_limits_usage", coEnum);
     def->label = L("How to apply limits");
     def->full_label = L("Purpose of Machine Limits");
@@ -4026,7 +4038,7 @@ void PrintConfigDef::init_fff_params()
                    "(1+, 0 to use the current extruder to minimize tool changes).");
     def->min = 0;
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionInt(1));
+    def->set_default_value(new ConfigOptionInt(0));
 
     def = this->add("support_material_extrusion_width", coFloatOrPercent);
     def->label = L("Support material");
@@ -4058,7 +4070,7 @@ void PrintConfigDef::init_fff_params()
                    "(1+, 0 to use the current extruder to minimize tool changes). This affects raft too.");
     def->min = 0;
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionInt(1));
+    def->set_default_value(new ConfigOptionInt(0));
 
     def = this->add("support_material_interface_layers", coInt);
     def->label = L("Interface layers");
@@ -5900,6 +5912,7 @@ std::unordered_set<std::string> prusa_export_to_remove_keys = {
 "infill_dense_algo",
 "infill_dense",
 "infill_extrusion_spacing",
+"lift_min",
 "machine_max_acceleration_travel",
 "max_speed_reduction",
 "milling_after_z",

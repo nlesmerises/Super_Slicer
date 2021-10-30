@@ -725,9 +725,10 @@ std::string GCodeWriter::lift()
     // compare against epsilon because travel_to_z() does math on it
     // and subtracting layer_height from retract_lift might not give
     // exactly zero
-    if (std::abs(m_lifted) < EPSILON && target_lift > 0) {
+    if (std::abs(m_lifted) - target_lift < EPSILON && target_lift > 0) {
+        std::string str =  this->_travel_to_z(m_pos.z() + target_lift - m_lifted, "lift Z");
         m_lifted = target_lift;
-        return this->_travel_to_z(m_pos.z() + target_lift, "lift Z");
+        return str;
     }
     return "";
 }
