@@ -1840,6 +1840,8 @@ public:
     // By setting min=0, only nonnegative input is allowed.
     double                              min             = INT_MIN;
     double                              max             = INT_MAX;
+    // To check if it's not a typo and a % is missing
+    double                              max_literal     = 1;
     // max precision after the dot, only for display
     int                                 precision       = 6;
     ConfigOptionMode                    mode            = comSimple;

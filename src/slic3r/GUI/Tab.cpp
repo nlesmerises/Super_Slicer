@@ -1887,6 +1887,10 @@ bool Tab::create_pages(std::string setting_type_name, int idx_page)
                     option.opt.tooltip = (params[i].substr(8, params[i].size() - 8));
                     need_to_notified_search = true;
                 }
+                else if (boost::starts_with(params[i], "max_literal$"))
+                {
+                    option.opt.max_literal = atoi(params[i].substr(12, params[i].size() - 12).c_str());
+                }
             }
 
             if (need_to_notified_search)

@@ -411,15 +411,15 @@ void Field::get_value_by_opt_type(wxString& str, const bool check_value/* = true
                     show_error(m_parent, _(L("Input value is out of range")));
                     if (m_opt.min > val) val = m_opt.min;
                     set_value(double_to_string(val, m_opt.precision), true);
-                } else if (((m_opt.sidetext.rfind("mm/s") != std::string::npos && val > m_opt.max) ||
-                    (m_opt.sidetext.rfind("mm ") != std::string::npos && val > 1)) &&
+                } else if (
+                    (
+                        (m_opt.sidetext.rfind("mm/s") != std::string::npos && val > m_opt.max) 
+                        || 
+                        (m_opt.sidetext.rfind("mm ") != std::string::npos && val > m_opt.max_literal)
+                    ) 
+                    &&
                     (m_value.empty() || std::string(str.ToUTF8().data()) != boost::any_cast<std::string>(m_value)))
                 {
-                    // exceptions
-                    if (std::set<t_config_option_key>{"infill_anchor", "infill_anchor_max", "avoid_crossing_perimeters_max_detour"}.count(m_opt.opt_key) > 0) {
-                        m_value = std::string(str.ToUTF8().data());
-                        break;
-                    }
                     if (m_opt.opt_key.find("extrusion_width") != std::string::npos || m_opt.opt_key.find("extrusion_spacing") != std::string::npos) {
                         const DynamicPrintConfig& printer_config = wxGetApp().preset_bundle->printers.get_edited_preset().config;
                         const std::vector<double>& nozzle_diameters = printer_config.option<ConfigOptionFloats>("nozzle_diameter")->values;
