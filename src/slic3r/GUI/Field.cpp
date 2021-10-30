@@ -206,8 +206,7 @@ wxString Field::get_tooltip_text(const wxString& default_string)
 
 	if (tooltip.length() > 0)
         tooltip_text = tooltip + "\n" + _(L("default value")) + "\t: " +
-        (boost::iends_with(opt_id, "_gcode") ? "\n" : "") + default_string +
-        (boost::iends_with(opt_id, "_gcode") ? "" : "\n") + 
+        (boost::iends_with(opt_id, "_gcode") ? "\n" : "") + default_string + "\n" +
         _(L("parameter name")) + "\t: " + opt_id;
 
 	return tooltip_text;
@@ -263,8 +262,9 @@ void Field::set_tooltip(const wxString& default_string, wxWindow* window) {
             wxWindowList tipWindow = this->getWindow()->GetChildren();
             if (tipWindow.size() > 0) {
                 wxWindow* tooltipWindow = tipWindow.GetLast()->GetData();
-                if (tooltipWindow && tooltipWindow == this->m_rich_tooltip_timer.m_current_rich_tooltip)
+                if (tooltipWindow && tooltipWindow == this->m_rich_tooltip_timer.m_current_rich_tooltip) {
                     tooltipWindow->Hide();// DismissAndNotify();
+                }
             }
             });
     }else
@@ -272,7 +272,8 @@ void Field::set_tooltip(const wxString& default_string, wxWindow* window) {
 }
 
 void RichTooltipTimer::Notify() {
-    if (wxGetActiveWindow() && this->m_is_rich_tooltip_ready && m_current_window) {
+    if (wxGetActiveWindow() && this->m_is_rich_tooltip_ready && m_current_window && !m_current_window->HasFocus()) {
+        this->m_previous_focus = wxGetActiveWindow()->FindFocus();
         this->m_current_rich_tooltip = nullptr;
         wxRichToolTip richTooltip(
             m_field->get_rich_tooltip_title(this->m_value),
@@ -281,6 +282,11 @@ void RichTooltipTimer::Notify() {
         richTooltip.ShowFor(m_current_window);
         wxWindowList tipWindow = m_current_window->GetChildren();
         this->m_current_rich_tooltip = tipWindow.GetLast()->GetData();
+        this->m_current_rich_tooltip->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& event) {
+                CallAfter([this]() {
+                    if (this->m_previous_focus) this->m_previous_focus->SetFocus(); 
+                });
+        });
     }
 }
 
