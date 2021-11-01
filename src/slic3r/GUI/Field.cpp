@@ -272,7 +272,11 @@ void Field::set_tooltip(const wxString& default_string, wxWindow* window) {
 }
 
 void RichTooltipTimer::Notify() {
-    if (wxGetActiveWindow() && this->m_is_rich_tooltip_ready && m_current_window && !m_current_window->HasFocus()) {
+    if (wxGetActiveWindow() && this->m_is_rich_tooltip_ready && m_current_window 
+#ifdef __WXMSW__
+        && !m_current_window->HasFocus()
+#endif /* __WXMSW__ */
+        ) {
         this->m_previous_focus = wxGetActiveWindow()->FindFocus();
         this->m_current_rich_tooltip = nullptr;
         wxRichToolTip richTooltip(
@@ -282,11 +286,13 @@ void RichTooltipTimer::Notify() {
         richTooltip.ShowFor(m_current_window);
         wxWindowList tipWindow = m_current_window->GetChildren();
         this->m_current_rich_tooltip = tipWindow.GetLast()->GetData();
+#ifdef __WXMSW__
         this->m_current_rich_tooltip->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& event) {
                 CallAfter([this]() {
                     if (this->m_previous_focus) this->m_previous_focus->SetFocus(); 
                 });
         });
+#endif /* __WXMSW__ */
     }
 }
 
