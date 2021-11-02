@@ -1889,7 +1889,10 @@ bool Tab::create_pages(std::string setting_type_name, int idx_page)
                 }
                 else if (boost::starts_with(params[i], "max_literal$"))
                 {
-                    option.opt.max_literal = atoi(params[i].substr(12, params[i].size() - 12).c_str());
+                    if(params[i].back() == '%')
+                        option.opt.max_literal = { boost::lexical_cast<double>(params[i].substr(12, params[i].size() - 13).c_str()), true };
+                    else
+                        option.opt.max_literal = { boost::lexical_cast<double>(params[i].substr(12, params[i].size() - 12).c_str()), false };
                 }
             }
 
