@@ -1191,6 +1191,11 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
         wxGetApp().mainframe->plater()->canvas3D()->set_arrange_settings(m_presets->get_edited_preset().config, m_presets->get_edited_preset().printer_technology());
     }
 
+    // reset variable layer height if min/max has changed, as it's probably now invalid.
+    if (opt_key.find("min_layer_height") == 0   || opt_key.find("max_layer_height") == 0) {
+        wxPostEvent((wxEvtHandler*)wxGetApp().mainframe->plater()->canvas3D()->get_wxglcanvas(), SimpleEvent(EVT_GLCANVAS_RESET_LAYER_HEIGHT_PROFILE));
+    }
+
     //wxGetApp().preset_bundle->value_changed(opt_key);
     // update phony fields
     
@@ -1810,6 +1815,10 @@ bool Tab::create_pages(std::string setting_type_name, int idx_page)
             if (current_group->sidetext_width >= 0)
                 option.opt.sidetext_width = current_group->sidetext_width;
 
+            // global before the loop because can be overriden
+            if (height > 0)
+                option.opt.height = height;
+
             bool need_to_notified_search = false;
             bool colored = false;
             wxString label_path;
@@ -1878,13 +1887,18 @@ bool Tab::create_pages(std::string setting_type_name, int idx_page)
                     option.opt.tooltip = (params[i].substr(8, params[i].size() - 8));
                     need_to_notified_search = true;
                 }
+                else if (boost::starts_with(params[i], "max_literal$"))
+                {
+                    if(params[i].back() == '%')
+                        option.opt.max_literal = { boost::lexical_cast<double>(params[i].substr(12, params[i].size() - 13).c_str()), true };
+                    else
+                        option.opt.max_literal = { boost::lexical_cast<double>(params[i].substr(12, params[i].size() - 12).c_str()), false };
+                }
             }
 
             if (need_to_notified_search)
                 Search::OptionsSearcher::register_label_override(option.opt.opt_key, option.opt.label, option.opt.full_label, option.opt.tooltip);
 
-            if(height>0)
-                option.opt.height = height;
 
             if (!in_line) {
                 if (colored) {
@@ -2951,7 +2965,7 @@ void TabPrinter::toggle_options()
 
         // retract lift above / below only applies if using retract lift
         vec.resize(0);
-        vec = { "retract_lift_above", "retract_lift_below", "retract_lift_top" };
+        vec = { "retract_lift_above", "retract_lift_below", "retract_lift_top", "retract_lift_first_layer" };
         for (auto el : vec) {
             field = get_field(el, i);
             if (field)
@@ -3034,24 +3048,26 @@ void TabPrinter::toggle_options()
         int64_t z_step_Mlong = (int64_t)(z_step * 1000000.);
         DynamicPrintConfig new_conf;
         bool has_changed = false;
-        const std::vector<double>& min_layer_height = m_config->option<ConfigOptionFloats>("min_layer_height")->values;
-        for (int i = 0; i < min_layer_height.size(); i++) {
-            if (min_layer_height[i] != 0 && (int64_t)(min_layer_height[i] * 1000000.) % z_step_Mlong != 0) {
-                if (!has_changed)
-                    new_conf = *m_config;
-                new_conf.option<ConfigOptionFloats>("min_layer_height")->values[i] = std::max(z_step, Slic3r::check_z_step(new_conf.option<ConfigOptionFloats>("min_layer_height")->values[i], z_step));
-                has_changed = true;
-            }
-        }
         const std::vector<double>& nozzle_diameters = m_config->option<ConfigOptionFloats>("nozzle_diameter")->values;
-        std::vector<double> max_layer_height = m_config->option<ConfigOptionFloats>("max_layer_height")->values;
+        const std::vector<FloatOrPercent>& min_layer_height = m_config->option<ConfigOptionFloatsOrPercents>("min_layer_height")->values;
+        for (int i = 0; i < min_layer_height.size(); i++) {
+            if(!min_layer_height[i].percent)
+                if (min_layer_height[i].get_abs_value(nozzle_diameters[i]) != 0 && (int64_t)(min_layer_height[i].get_abs_value(nozzle_diameters[i]) * 1000000.) % z_step_Mlong != 0) {
+                    if (!has_changed)
+                        new_conf = *m_config;
+                    new_conf.option<ConfigOptionFloatsOrPercents>("min_layer_height")->values[i] = FloatOrPercent{ std::max(z_step, Slic3r::check_z_step(min_layer_height[i].get_abs_value(nozzle_diameters[i]), z_step)), false };
+                    has_changed = true;
+                }
+        }
+        std::vector<FloatOrPercent> max_layer_height = m_config->option<ConfigOptionFloatsOrPercents>("max_layer_height")->values;
         for (int i = 0; i < max_layer_height.size(); i++) {
-            if ((int64_t)(max_layer_height[i] * 1000000.) % z_step_Mlong != 0) {
-                if (!has_changed)
-                    new_conf = *m_config;
-                new_conf.option<ConfigOptionFloats>("max_layer_height")->values[i] = std::max(z_step, Slic3r::check_z_step(new_conf.option<ConfigOptionFloats>("max_layer_height")->values[i], z_step));
-                has_changed = true;
-            }
+            if (!max_layer_height[i].percent)
+                if ((int64_t)(max_layer_height[i].get_abs_value(nozzle_diameters[i]) * 1000000.) % z_step_Mlong != 0) {
+                    if (!has_changed)
+                        new_conf = *m_config;
+                    new_conf.option<ConfigOptionFloatsOrPercents>("max_layer_height")->values[i] = FloatOrPercent{ std::max(z_step, Slic3r::check_z_step(new_conf.option<ConfigOptionFloats>("max_layer_height")->values[i], z_step)), false };
+                    has_changed = true;
+                }
         }
         if (has_changed) {
             load_config(new_conf);
