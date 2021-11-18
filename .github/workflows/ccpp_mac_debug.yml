@@ -18,14 +18,14 @@ jobs:
       run: ./BuildMacOS.sh -ix
     - name: tar the pack
       working-directory: ./build
-      run: tar -cvf ${{ github.event.repository.name }}.tar pack/${{ github.event.repository.name }}
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        name: nightly_macos.tar
-        path: build/${{ github.event.repository.name }}.tar
+      run: ls
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
         name: nightly_macos_debug.dmg
         path: build/${{ github.event.repository.name }}.dmg
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: nightly_macos.tar
+        path: build/${{ github.event.repository.name }}.tar

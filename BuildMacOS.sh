@@ -46,7 +46,7 @@ echo -n "[1/9] Updating submodules..."
     pushd resources/profiles
     git submodule update --init
     popd
-} > $ROOT/build/Build.log # Capture all command output
+} #> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 echo -n "[2/9] Changing date in version..."
@@ -54,7 +54,7 @@ echo -n "[2/9] Changing date in version..."
     # change date in version
     sed "s/+UNKNOWN/_$(date '+%F')/" version.inc > version.date.inc
     mv version.date.inc version.inc
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 # mkdir in deps
@@ -68,14 +68,14 @@ echo -n "[3/9] Configuring dependencies..."
     # cmake deps
     pushd deps/build
     cmake .. -DCMAKE_OSX_DEPLOYMENT_TARGET="10.13" -DCMAKE_OSX_ARCHITECTURES:STRING="$ARCH"
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 echo -n "[4/9] Building dependencies..."
 {
     # make deps
     make -j$NCORES
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 echo -n "[5/9] Renaming wxscintilla library..."
@@ -84,7 +84,7 @@ echo -n "[5/9] Renaming wxscintilla library..."
     pushd destdir/usr/local/lib
     cp libwxscintilla-3.1.a libwx_osx_cocoau_scintilla-3.1.a
     popd
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 echo -n "[6/9] Cleaning dependencies..."
@@ -92,7 +92,7 @@ echo -n "[6/9] Cleaning dependencies..."
     # clean deps
     rm -rf dep_*
     popd
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 echo -n "[7/9] Configuring Slic3r..."
@@ -100,7 +100,7 @@ echo -n "[7/9] Configuring Slic3r..."
     # cmake
     pushd build
     cmake .. -DCMAKE_PREFIX_PATH="$PWD/../deps/build/destdir/usr/local" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.13" -DSLIC3R_STATIC=1 -DCMAKE_OSX_ARCHITECTURES:STRING="$ARCH"
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
 
 echo -n "[8/9] Building Slic3r..."
@@ -110,9 +110,14 @@ echo -n "[8/9] Building Slic3r..."
 
     # make .mo
     make gettext_po_to_mo
-} &> $ROOT/build/Build.log # Capture all command output
+} #&> $ROOT/build/Build.log # Capture all command output
 echo "done"
-
+echo "ls ROOT"
+ls $ROOT
+echo "ls ROOT/build"
+ls $ROOT/build
+echo "ls -al ROOT/build/src"
+ls -al $ROOT/build/src
 # Give proper permissions to script
 chmod 755 $ROOT/build/src/BuildMacOSImage.sh
 
@@ -122,3 +127,5 @@ then
 else
 	$ROOT/build/src/BuildMacOSImage.sh
 fi
+echo "ls -al ROOT/build"
+ls -al $ROOT/build
