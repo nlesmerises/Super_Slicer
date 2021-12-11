@@ -27,7 +27,7 @@ ExternalProject_Add(dep_tbb
         -DTBB_BUILD_TESTS=OFF
         -DCMAKE_CXX_FLAGS=${TBB_MINGW_WORKAROUND}
         -DCMAKE_INSTALL_PREFIX=${DESTDIR}/usr/local
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
         ${DEP_CMAKE_OPTS}
 )
 
@@ -38,7 +38,7 @@ ExternalProject_Add(dep_gtest
     CMAKE_ARGS
         -DBUILD_GMOCK=OFF ${DEP_CMAKE_OPTS}
         -DCMAKE_INSTALL_PREFIX=${DESTDIR}/usr/local
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
 )
 
 ExternalProject_Add(dep_cereal
@@ -48,7 +48,7 @@ ExternalProject_Add(dep_cereal
     CMAKE_ARGS
         -DJUST_INSTALL_CEREAL=on
         -DCMAKE_INSTALL_PREFIX=${DESTDIR}/usr/local
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
         ${DEP_CMAKE_OPTS}
 )
 
@@ -63,7 +63,7 @@ ExternalProject_Add(dep_nlopt
         -DNLOPT_MATLAB=OFF
         -DNLOPT_GUILE=OFF
         -DCMAKE_INSTALL_PREFIX=${DESTDIR}/usr/local
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
         ${DEP_CMAKE_OPTS}
 )
 
@@ -76,7 +76,7 @@ ExternalProject_Add(dep_qhull
     CMAKE_ARGS
         -DBUILD_SHARED_LIBS=OFF
         -DCMAKE_INSTALL_PREFIX=${DESTDIR}/usr/local
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
         ${DEP_CMAKE_OPTS}
 )
 
@@ -95,7 +95,7 @@ ExternalProject_Add(dep_blosc
         -DBUILD_TESTS=OFF 
         -DBUILD_BENCHMARKS=OFF 
         -DPREFER_EXTERNAL_ZLIB=ON
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
     PATCH_COMMAND       ${GIT_EXECUTABLE} reset --hard && git clean -df && 
                         ${GIT_EXECUTABLE} apply --whitespace=fix ${CMAKE_CURRENT_SOURCE_DIR}/blosc-mods.patch
 )
@@ -104,16 +104,18 @@ ExternalProject_Add(dep_blosc
 # binaries.  We need this because it compiles some code to generate other
 # source and we need to be able to run the executables.  When we link the
 # library, the x86_64 part will be ignored.
-if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND ${CMAKE_OSX_ARCHITECTURES} MATCHES "arm")
-        set(_openexr_arch arm64^^x86_64)
-else()
-        set(_openexr_arch ${CMAKE_OSX_ARCHITECTURES})
+if (APPLE)
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND ${CMAKE_OSX_ARCHITECTURES} MATCHES "arm")
+            set(_openexr_arch arm64^^x86_64)
+    else()
+            set(_openexr_arch ${CMAKE_OSX_ARCHITECTURES})
+    endif()
 endif()
 ExternalProject_Add(dep_openexr
     EXCLUDE_FROM_ALL 1
     GIT_REPOSITORY https://github.com/openexr/openexr.git
     GIT_TAG eae0e337c9f5117e78114fd05f7a415819df413a #v2.4.0 
-    LIST_SEPARATOR ^^
+    $<$<PLATFORM_ID:Darwin>:LIST_SEPARATOR ^^>
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${DESTDIR}/usr/local
         -DBUILD_SHARED_LIBS=OFF
@@ -122,7 +124,7 @@ ExternalProject_Add(dep_openexr
         -DPYILMBASE_ENABLE:BOOL=OFF 
         -DOPENEXR_VIEWERS_ENABLE:BOOL=OFF
         -DOPENEXR_BUILD_UTILS:BOOL=OFF
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${_openexr_arch}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${_openexr_arch}>
 )
 
 ExternalProject_Add(dep_openvdb
@@ -143,7 +145,7 @@ ExternalProject_Add(dep_openvdb
         -DTBB_STATIC=ON
         -DOPENVDB_BUILD_VDB_PRINT=ON
         -DDISABLE_DEPENDENCY_VERSION_CHECKS=ON
-        -DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}
+        $<$<PLATFORM_ID:Darwin>:-DCMAKE_OSX_ARCHITECTURES:STRING=${CMAKE_OSX_ARCHITECTURES}>
     PATCH_COMMAND PATCH_COMMAND     ${GIT_EXECUTABLE} checkout -f -- . && git clean -df && 
                                     ${GIT_EXECUTABLE} apply --whitespace=fix ${CMAKE_CURRENT_SOURCE_DIR}/openvdb-mods.patch
 )
